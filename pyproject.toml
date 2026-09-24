@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fraudguard"
+version = "1.0.0"
+description = "Detecção de fraude em tempo real com Early Warning System e relatórios via LLM"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+fraudguard = ["static/*.html"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+filterwarnings = ["ignore::UserWarning:sklearn"]
+
+[tool.coverage.run]
+source = ["fraudguard"]
+omit = ["*/__init__.py"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+
+[tool.ruff]
+line-length = 135
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF", "S", "PT"]
+ignore = [
+  "RUF001", "RUF002", "RUF003",  # caracteres unicode legítimos em textos pt-BR (×, ≤, –)
+  "S311",                        # random não criptográfico só em simulação
+  "S104",                        # bind 0.0.0.0 é necessário dentro do container
+  "E702", "E731",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S105", "PT011", "PT018", "PT006", "B017"]
+"scripts/*" = ["S101"]

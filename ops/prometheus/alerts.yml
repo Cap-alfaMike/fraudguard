@@ -1,0 +1,35 @@
+# Alertas de plataforma (agregados entre réplicas). Complementam o EWS in-process.
+groups:
+  - name: fraudguard-slo
+    rules:
+      - alert: FraudGuardLatencyP99High
+        expr: histogram_quantile(0.99, sum by (le) (rate(fraudguard_inference_latency_seconds_bucket[5m]))) > 0.05
+        for: 5m
+        labels: { severity: warning, team: sre }
+        annotations:
+          summary: "p99 de inferência acima de 50 ms"
+          runbook: "docs/RUNBOOK.md#latencia"
+      - alert: FraudGuardErrorRate
+        expr: sum(rate(fraudguard_errors_total{kind!="validation"}[5m])) / clamp_min(sum(rate(fraudguard_predictions_total[5m])), 1) > 0.001
+        for: 5m
+        labels: { severity: critical, team: sre }
+        annotations: { summary: "Erros internos > 0,1% das predições", runbook: "docs/RUNBOOK.md#erros" }
+      - alert: FraudGuardValidationSpike
+        expr: sum(rate(fraudguard_errors_total{kind="validation"}[5m])) > 5
+        for: 10m
+        labels: { severity: warning, team: data }
+        annotations: { summary: "Muitas requisições inválidas: possível mudança de contrato no upstream" }
+  - name: fraudguard-model
+    rules:
+      - alert: FraudGuardSuspiciousRateSpike
+        expr: |
+          sum(rate(fraudguard_predictions_total{decision="SUSPEITO"}[10m]))
+            / clamp_min(sum(rate(fraudguard_predictions_total[10m])), 1)
+          > 3 * scalar(avg_over_time((sum(rate(fraudguard_predictions_total{decision="SUSPEITO"}[1h])) / clamp_min(sum(rate(fraudguard_predictions_total[1h])), 1))[7d:1h]))
+        for: 10m
+        labels: { severity: critical, team: fraud-ops }
+        annotations: { summary: "Taxa de suspeitas 3x acima da média de 7 dias", runbook: "docs/RUNBOOK.md#ataque" }
+      - alert: FraudGuardEWSCritical
+        expr: increase(fraudguard_ews_alerts_total{severity="CRITICAL"}[5m]) > 0
+        labels: { severity: critical, team: fraud-ops }
+        annotations: { summary: "EWS emitiu alerta crítico ({{ $labels.type }})" }

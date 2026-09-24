@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FraudGuard: sala de risco</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F3F5F7; --panel: #FFFFFF; --ink: #16202B; --slate: #5A6878; --rule: #D5DCE3;
+    --vault: #1F4E79; --alarm: #B3261E; --safe: #1E7A5A; --amber: #A86A0B;
+    --state: var(--safe);
+    font-family: "Archivo", "Helvetica Neue", Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink); background: var(--paper);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; line-height: 1.45; }
+  :focus-visible { outline: 3px solid var(--vault); outline-offset: 2px; }
+
+  /* O elemento memorável: uma faixa de estado que muda de cor e de palavra */
+  .state-band { background: var(--state); color: #fff; transition: background .6s ease; }
+  .state-inner { max-width: 1180px; margin: 0 auto; padding: 28px 24px 24px; display: grid;
+                 grid-template-columns: 1fr auto; gap: 16px; align-items: end; }
+  .state-word { font-size: clamp(3rem, 9vw, 6.5rem); font-weight: 800; font-stretch: 118%;
+                line-height: .9; letter-spacing: -.02em; margin: 0; }
+  .state-caption { margin: 10px 0 0; font-size: 1.05rem; max-width: 60ch; opacity: .92; }
+  .brand { text-align: right; font-size: .95rem; opacity: .9; }
+  .brand strong { display: block; font-size: 1.25rem; font-stretch: 110%; }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 24px; display: grid; gap: 24px;
+         grid-template-columns: repeat(12, 1fr); }
+  section { background: var(--panel); border: 1px solid var(--rule); padding: 20px; }
+  h2 { font-size: 1.05rem; font-weight: 700; margin: 0 0 14px; }
+  .figures { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); padding: 0; }
+  .figure { padding: 18px 20px; border-right: 1px solid var(--rule); }
+  .figure:last-child { border-right: 0; }
+  .figure .v { font-size: 2rem; font-weight: 700; font-stretch: 105%; }
+  .figure .k { color: var(--slate); font-size: .92rem; }
+  .figure.money .v { color: var(--vault); }
+
+  .tape { grid-column: 1 / 9; }
+  .drift { grid-column: 9 / -1; }
+  .alerts { grid-column: 1 / 7; }
+  .report { grid-column: 7 / -1; }
+  .demo { grid-column: 1 / -1; }
+
+  .tape svg { width: 100%; height: 190px; display: block; }
+  .legend { display: flex; flex-wrap: wrap; gap: 18px; color: var(--slate); font-size: .88rem; margin-top: 8px; }
+  .legend i { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+  td { padding: 6px 0; border-bottom: 1px solid var(--rule); }
+  td.bar { width: 45%; }
+  .meter { height: 8px; background: #E7ECF1; position: relative; }
+  .meter span { position: absolute; inset: 0 auto 0 0; background: var(--vault); }
+  .meter span.warn { background: var(--amber); }
+  .meter span.crit { background: var(--alarm); }
+  .muted { color: var(--slate); font-size: .9rem; }
+
+  ol.alert-list { list-style: none; margin: 0; padding: 0 6px 0 0; max-height: 520px; overflow: auto; }
+  .alert-list li { padding: 10px 0 10px 14px; border-left: 4px solid var(--amber); margin-bottom: 10px; }
+  .alert-list li.CRITICAL { border-left-color: var(--alarm); }
+  .alert-list li.INFO { border-left-color: var(--vault); }
+  .alert-list b { display: block; }
+  .alert-list time { color: var(--slate); font-size: .85rem; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  button, select { font: inherit; padding: 9px 14px; border: 1px solid var(--ink); background: #fff;
+                   color: var(--ink); cursor: pointer; }
+  button.primary { background: var(--vault); color: #fff; border-color: var(--vault); }
+  button.attack { border-color: var(--alarm); color: var(--alarm); }
+  button:disabled { opacity: .5; cursor: progress; }
+  .report-body { margin-top: 14px; max-height: 420px; overflow: auto; font-size: .95rem; max-width: 72ch; }
+  .report-body h3 { font-size: 1rem; margin: 16px 0 6px; }
+  .report-meta { color: var(--slate); font-size: .85rem; margin-top: 10px; }
+  .error { color: var(--alarm); }
+
+  @media (max-width: 900px) {
+    .figures { grid-template-columns: repeat(2, 1fr); }
+    .figure:nth-child(2) { border-right: 0; }
+    .figure:nth-child(-n+2) { border-bottom: 1px solid var(--rule); }
+    .tape, .drift, .alerts, .report { grid-column: 1 / -1; }
+    .state-inner { grid-template-columns: 1fr; }
+    .brand { text-align: left; }
+  }
+  @media (prefers-reduced-motion: reduce) { .state-band { transition: none; } }
+</style>
+</head>
+<body>
+<header class="state-band">
+  <div class="state-inner">
+    <div>
+      <h1 class="state-word" id="stateWord">Carregando</h1>
+      <p class="state-caption" id="stateCaption">Conectando ao serviço de scoring.</p>
+    </div>
+    <div class="brand"><strong>FraudGuard</strong><span id="modelVersion">modelo em carregamento</span></div>
+  </div>
+</header>
+
+<main>
+  <section class="figures" aria-label="Indicadores">
+    <div class="figure"><div class="v" id="fTotal">0</div><div class="k">transações avaliadas</div></div>
+    <div class="figure"><div class="v" id="fSusp">0</div><div class="k">marcadas como suspeitas</div></div>
+    <div class="figure money"><div class="v" id="fBlocked">€0</div><div class="k">valor retido para revisão</div></div>
+    <div class="figure money"><div class="v" id="fAvoided">€0</div><div class="k">perda evitada (estimativa)</div></div>
+  </section>
+
+  <section class="tape">
+    <h2>Taxa de suspeitas ao longo do tempo</h2>
+    <svg id="tape" viewBox="0 0 700 190" preserveAspectRatio="none" role="img"
+         aria-label="Taxa de suspeitas na janela comparada ao baseline"></svg>
+    <div class="legend"><span><i style="background:var(--alarm)"></i>janela atual</span>
+      <span><i style="background:var(--slate)"></i>baseline do treino</span>
+      <span id="latency"></span></div>
+  </section>
+
+  <section class="drift">
+    <h2>Estabilidade das variáveis (PSI)</h2>
+    <table id="driftTable"><tbody></tbody></table>
+    <p class="muted">Abaixo de 0,10 estável; de 0,10 a 0,25 atenção; acima de 0,25 mudança relevante.</p>
+  </section>
+
+  <section class="alerts">
+    <h2>Alertas recentes</h2>
+    <ol class="alert-list" id="alertList"></ol>
+  </section>
+
+  <section class="report">
+    <h2>Relatório inteligente</h2>
+    <div class="controls">
+      <label for="audience" class="muted">Para</label>
+      <select id="audience">
+        <option value="executivo">Diretoria</option>
+        <option value="operacoes">Prevenção à fraude</option>
+        <option value="tecnico">ML e SRE</option>
+      </select>
+      <button class="primary" id="genReport">Gerar relatório</button>
+    </div>
+    <div class="report-body" id="reportBody"><p class="muted">Escolha o público e gere um relatório a partir dos sinais atuais.</p></div>
+    <div class="report-meta" id="reportMeta"></div>
+  </section>
+
+  <section class="demo" id="demo">
+    <h2>Demonstração ao vivo</h2>
+    <p class="muted">Envia transações sintéticas pelo mesmo pipeline de produção para mostrar a reação do sistema.</p>
+    <div class="controls">
+      <button data-s="normal">Simular tráfego normal</button>
+      <button class="attack" data-s="card_testing">Simular teste de cartão</button>
+      <button class="attack" data-s="high_value">Simular fraude de alto valor</button>
+      <button class="attack" data-s="drift">Simular mudança de perfil</button>
+      <button id="reset">Zerar monitor</button>
+      <span class="muted" id="demoMsg" aria-live="polite"></span>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const eur = (v) => "€" + (v || 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 });
+const int = (v) => (v || 0).toLocaleString("pt-BR");
+const history = [];
+const STATES = {
+  VERDE: ["Operação normal", "var(--safe)", "Nenhum sinal de ataque ou degradação nos últimos 15 minutos."],
+  AMARELO: ["Atenção", "var(--amber)", "Há sinais que merecem acompanhamento. Veja os alertas abaixo."],
+  VERMELHO: ["Sob ataque", "var(--alarm)", "Alerta crítico ativo. Acione o protocolo de contenção."],
+};
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+// Markdown mínimo e SEGURO: escapa tudo antes de formatar (saída de LLM não é confiável)
+function md(text) {
+  const lines = esc(text).split("\n");
+  let html = "", list = null;
+  const close = () => { if (list) { html += `</${list}>`; list = null; } };
+  for (const raw of lines) {
+    const l = raw.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    if (/^#{2,3}\s/.test(l)) { close(); html += `<h3>${l.replace(/^#+\s/, "")}</h3>`; }
+    else if (/^\s*[-*]\s/.test(l)) { if (list !== "ul") { close(); html += "<ul>"; list = "ul"; } html += `<li>${l.replace(/^\s*[-*]\s/, "")}</li>`; }
+    else if (/^\s*\d+\.\s/.test(l)) { if (list !== "ol") { close(); html += "<ol>"; list = "ol"; } html += `<li>${l.replace(/^\s*\d+\.\s/, "")}</li>`; }
+    else if (l.trim()) { close(); html += `<p>${l}</p>`; }
+  }
+  close();
+  return html;
+}
+
+function drawTape(baseline) {
+  const svg = $("tape"), W = 700, H = 190, pad = 8;
+  if (history.length < 2) {
+    svg.innerHTML = `<text x="10" y="100" fill="#5A6878">Envie transações para ver a curva.</text>`;
+    return;
+  }
+  const max = Math.max(baseline * 4, ...history) || 0.01;
+  const x = (i) => pad + (i / (history.length - 1)) * (W - 2 * pad);
+  const y = (v) => H - pad - (v / max) * (H - 2 * pad);
+  const pts = history.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  svg.innerHTML = `
+    <line x1="${pad}" x2="${W - pad}" y1="${y(baseline)}" y2="${y(baseline)}" stroke="#5A6878" stroke-dasharray="6 5" stroke-width="1.5"/>
+    <polyline points="${pad},${H - pad} ${pts} ${W - pad},${H - pad}" fill="rgba(179,38,30,.10)" stroke="none"/>
+    <polyline points="${pts}" fill="none" stroke="#B3261E" stroke-width="2.5" stroke-linejoin="round"/>
+    <text x="${W - pad}" y="16" text-anchor="end" font-size="13" fill="#5A6878">${(history.at(-1) * 100).toFixed(2)}% agora</text>`;
+}
+
+function render(st) {
+  const [word, color, caption] = STATES[st.health] || STATES.VERDE;
+  $("stateWord").textContent = word;
+  $("stateCaption").textContent = caption;
+  document.documentElement.style.setProperty("--state", color);
+  $("fTotal").textContent = int(st.total_events);
+  $("fSusp").textContent = int(st.total_suspicious);
+  $("fBlocked").textContent = eur(st.value_blocked_eur);
+  $("fAvoided").textContent = eur(st.expected_loss_avoided_eur);
+  if (st.window_size) { history.push(st.suspicious_rate || 0); if (history.length > 120) history.shift(); }
+  drawTape(st.baseline_suspicious_rate || 0);
+  if (st.latency_ms) $("latency").textContent = `latência p99 de ${st.latency_ms.p99.toFixed(2)} ms (SLO ${st.latency_slo_ms} ms)`;
+
+  const rows = Object.entries(st.feature_psi || {});
+  if (st.score_psi != null) rows.unshift(["scores do modelo", st.score_psi]);
+  $("driftTable").tBodies[0].innerHTML = rows.length ? rows.map(([k, v]) => {
+    const cls = v >= 0.25 ? "crit" : v >= 0.10 ? "warn" : "";
+    return `<tr><td>${esc(k)}</td><td>${v.toFixed(3)}</td><td class="bar"><div class="meter"><span class="${cls}" style="width:${Math.min(v / 0.5, 1) * 100}%"></span></div></td></tr>`;
+  }).join("") : `<tr><td class="muted">O cálculo começa após 200 transações na janela.</td></tr>`;
+
+  const alerts = st.active_alerts || [];
+  $("alertList").innerHTML = alerts.length ? alerts.map(a => `
+    <li class="${esc(a.severity)}"><b>${esc(a.title)}</b>${esc(a.message)}
+      <br><time>${new Date(a.created_at * 1000).toLocaleTimeString("pt-BR")}</time></li>`).join("")
+    : `<li class="INFO">Nenhum alerta. Os avisos aparecem aqui assim que um sinal for detectado.</li>`;
+}
+
+async function poll() {
+  try {
+    const r = await fetch("/ews/status");
+    if (!r.ok) throw new Error(r.status === 503 ? "O modelo não está carregado no serviço." : `O serviço respondeu ${r.status}.`);
+    render(await r.json());
+  } catch (e) {
+    $("stateWord").textContent = "Sem conexão";
+    $("stateCaption").textContent = e.message + " Nova tentativa a cada 3 segundos.";
+    document.documentElement.style.setProperty("--state", "var(--slate)");
+  }
+}
+
+$("genReport").onclick = async () => {
+  const btn = $("genReport");
+  btn.disabled = true; btn.textContent = "Gerando relatório";
+  try {
+    const r = await fetch("/ews/report", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ audience: $("audience").value }) });
+    if (!r.ok) throw new Error(`O serviço respondeu ${r.status}.`);
+    const rep = await r.json();
+    $("reportBody").innerHTML = md(rep.content);
+    const parts = [rep.source === "llm" ? `Gerado por ${rep.model}` : "Gerado por template (LLM desativado ou indisponível)"];
+    if (rep.grounding_ratio != null) parts.push(`${Math.round(rep.grounding_ratio * 100)}% dos números rastreáveis aos dados`);
+    parts.push(`${rep.latency_ms} ms`);
+    $("reportMeta").textContent = parts.join("; ") + ".";
+  } catch (e) {
+    $("reportBody").innerHTML = `<p class="error">O relatório não foi gerado. ${esc(e.message)}</p>`;
+  } finally { btn.disabled = false; btn.textContent = "Gerar relatório"; }
+};
+
+document.querySelectorAll("#demo button[data-s]").forEach(b => b.onclick = async () => {
+  b.disabled = true; $("demoMsg").textContent = "Enviando transações";
+  try {
+    const r = await fetch("/ews/simulate", { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ scenario: b.dataset.s, n: 400 }) });
+    if (r.status === 404) { $("demo").hidden = true; return; }
+    const d = await r.json();
+    $("demoMsg").textContent = `${d.n} enviadas, ${d.suspicious} suspeitas, ${d.alerts_fired.length} alertas novos.`;
+    poll();
+  } finally { b.disabled = false; }
+});
+$("reset").onclick = async () => {
+  await fetch("/ews/reset", { method: "POST" });
+  history.length = 0; $("demoMsg").textContent = "Monitor zerado."; poll();
+};
+
+fetch("/model/info").then(r => r.ok ? r.json() : null).then(m => {
+  if (m) $("modelVersion").textContent = `modelo ${m.model_name}, versão ${m.version}`;
+});
+poll();
+setInterval(poll, 3000);
+</script>
+</body>
+</html>

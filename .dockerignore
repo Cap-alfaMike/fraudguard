@@ -1,0 +1,17 @@
+.git
+.github
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+.venv
+.env
+artifacts/
+reports/
+docs/
+tests/
+scripts/
+*.md
+!data/raw/creditcard.csv

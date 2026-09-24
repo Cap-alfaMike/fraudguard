@@ -1,0 +1,57 @@
+# Subida rápida:          docker compose up --build
+# Com Prometheus:         docker compose --profile observability up --build
+# Retreino com CSV real:  docker compose --profile train run --rm trainer
+name: fraudguard
+
+x-hardening: &hardening
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+
+services:
+  api:
+    build: { context: ., target: runtime }
+    image: fraudguard:1.0.0
+    <<: *hardening
+    ports: ["8000:8000"]
+    environment:
+      FRAUDGUARD_LOG_LEVEL: ${FRAUDGUARD_LOG_LEVEL:-INFO}
+      FRAUDGUARD_DEMO_MODE: ${FRAUDGUARD_DEMO_MODE:-true}   # dashboard com simulador; false em produção
+      FRAUDGUARD_LATENCY_SLO_MS: ${FRAUDGUARD_LATENCY_SLO_MS:-50}
+      FRAUDGUARD_LLM_ENABLED: ${FRAUDGUARD_LLM_ENABLED:-true}
+      FRAUDGUARD_LLM_MODEL: ${FRAUDGUARD_LLM_MODEL:-claude-sonnet-5}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}               # opcional: sem chave usa relatório por template
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 768M }
+        reservations: { cpus: "0.5", memory: 256M }
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status==200 else 1)"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  trainer:
+    profiles: ["train"]
+    build: { context: ., target: trainer }
+    command: ["python", "-m", "fraudguard.modeling.train", "--no-plots", "--data", "/app/data/raw/creditcard.csv"]
+    volumes:
+      - ./data:/app/data:ro
+      - ./artifacts:/app/artifacts
+
+  prometheus:
+    profiles: ["observability"]
+    image: prom/prometheus:v3.5.0
+    <<: *hardening
+    tmpfs: [/tmp, /prometheus]
+    ports: ["9090:9090"]
+    volumes:
+      - ./ops/prometheus:/etc/prometheus:ro
+    depends_on:
+      api: { condition: service_healthy }

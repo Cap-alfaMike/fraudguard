@@ -1,0 +1,141 @@
+{
+  "version": "20260924114649-4a06a7b0",
+  "model_name": "lgbm_unweighted",
+  "trained_at": "2026-09-24T11:46:49.078947+00:00",
+  "data": {
+    "source": "synthetic:ulb-profile",
+    "fingerprint": "4a06a7b00f77",
+    "rows_after_dedup": 283725,
+    "duplicates_removed": 1082,
+    "fraud_rate": 0.001734,
+    "split": {
+      "train": {
+        "rows": 170235,
+        "frauds": 334
+      },
+      "valid": {
+        "rows": 56745,
+        "frauds": 64
+      },
+      "test": {
+        "rows": 56745,
+        "frauds": 94
+      }
+    }
+  },
+  "imbalance_ratio_train": 531.0,
+  "candidates": {
+    "logreg_balanced": {
+      "valid_auprc": 0.5507,
+      "train_seconds": 1.62
+    },
+    "lgbm_unweighted": {
+      "valid_auprc": 0.7629,
+      "train_seconds": 10.34,
+      "best_iteration": 234
+    },
+    "lgbm_sqrt_weight": {
+      "valid_auprc": 0.6719,
+      "train_seconds": 12.31,
+      "best_iteration": 294
+    },
+    "lgbm_full_weight": {
+      "valid_auprc": 0.6597,
+      "train_seconds": 13.75,
+      "best_iteration": 334
+    }
+  },
+  "calibration": "sigmoid (Platt) na validação",
+  "threshold": 0.055,
+  "threshold_objective": "min custo esperado EUR (validação)",
+  "valid_cost_at_threshold": 1604.99,
+  "cost_model": {
+    "review_cost": 3.0,
+    "chargeback_fee": 15.0,
+    "customer_lifetime_value": 400.0,
+    "churn_prob_after_fraud": 0.05,
+    "churn_prob_after_false_decline": 0.01
+  },
+  "test_metrics": {
+    "auprc": 0.7743,
+    "roc_auc": 0.9904,
+    "brier": 0.000604,
+    "recall_at_precision_80": 0.7021,
+    "recall_at_precision_90": 0.6596,
+    "brier_uncalibrated": 0.000741,
+    "threshold": 0.055,
+    "precision": 0.5299,
+    "recall": 0.7553,
+    "f1": 0.6228,
+    "f2": 0.6961,
+    "false_positive_rate": 0.001112,
+    "alert_rate": 0.002361,
+    "confusion_matrix": {
+      "tp": 71,
+      "fp": 63,
+      "fn": 23,
+      "tn": 56588
+    }
+  },
+  "test_business": {
+    "total_cost": 2333.55,
+    "baseline_cost": 9945.04,
+    "savings": 7611.49,
+    "savings_pct": 76.54,
+    "fraud_loss_prevented": 5780.49,
+    "fraud_loss_missed": 874.55,
+    "false_positive_cost": 441.0,
+    "review_cost": 213.0,
+    "n_flagged": 134,
+    "period_hours": 8.91
+  },
+  "feature_names": [
+    "V1",
+    "V2",
+    "V3",
+    "V4",
+    "V5",
+    "V6",
+    "V7",
+    "V8",
+    "V9",
+    "V10",
+    "V11",
+    "V12",
+    "V13",
+    "V14",
+    "V15",
+    "V16",
+    "V17",
+    "V18",
+    "V19",
+    "V20",
+    "V21",
+    "V22",
+    "V23",
+    "V24",
+    "V25",
+    "V26",
+    "V27",
+    "V28",
+    "log_amount",
+    "hour_sin",
+    "hour_cos",
+    "is_night",
+    "amount_is_zero",
+    "amount_is_micro"
+  ],
+  "environment": {
+    "python": "3.12.3",
+    "sklearn": "1.8.0",
+    "lightgbm": "4.7.0",
+    "pandas": "3.0.2",
+    "numpy": "2.4.4"
+  },
+  "training_seconds": 43.0,
+  "figures": [
+    "pr_curve.png",
+    "cost_curve.png",
+    "calibration.png"
+  ]
+}
