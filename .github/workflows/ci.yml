@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
       - name: Build (treina o modelo dentro do build)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with: { context: ., target: runtime, tags: "fraudguard:ci", load: true, cache-from: type=gha, cache-to: "type=gha,mode=max" }
       - name: Scan de vulnerabilidades (reporta CRITICAL)
         uses: aquasecurity/trivy-action@v0.36.0
