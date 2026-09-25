@@ -49,3 +49,6 @@ test-behavioral:     ## testes comportamentais do modelo
 
 k8s-render:          ## renderiza o overlay de produção (requer kustomize)
 	kustomize build deploy/k8s/overlays/production
+
+presentation-figures: ## figuras para apresentação (reports/figures/presentation/)
+	python scripts/make_presentation_figures.py

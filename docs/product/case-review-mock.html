@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FraudGuard: fila de revisão (mockup)</title>
+<style>
+  @font-face { font-family: "Archivo"; src: url("Archivo.ttf"); font-weight: 100 900; font-stretch: 62% 125%; }
+  :root {
+    --paper: #F3F5F7; --panel: #FFFFFF; --ink: #16202B; --slate: #5A6878; --rule: #D5DCE3;
+    --vault: #1F4E79; --alarm: #B3261E; --safe: #1E7A5A; --amber: #A86A0B; --soft-alarm: #FBEDEA; --soft-vault: #EAF1F8;
+    font-family: "Archivo", "Helvetica Neue", Arial, sans-serif; font-variant-numeric: tabular-nums;
+    color: var(--ink); background: var(--paper);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; line-height: 1.4; }
+  .band { background: var(--alarm); color: #fff; padding: 14px 28px; display: flex; gap: 18px; align-items: center; }
+  .band b { font-size: 1.05rem; }
+  .band span { opacity: .92; }
+  .band .cta { margin-left: auto; background: #fff; color: var(--alarm); padding: 6px 14px; font-weight: 700; }
+  .app { display: grid; grid-template-columns: 380px 1fr; min-height: calc(100vh - 52px); }
+  aside { background: var(--panel); border-right: 1px solid var(--rule); padding: 20px 0; }
+  aside h2 { font-size: 1rem; margin: 0 20px 4px; }
+  aside .sub { color: var(--slate); font-size: .88rem; margin: 0 20px 14px; }
+  .filters { display: flex; gap: 8px; margin: 0 20px 14px; }
+  .chip { border: 1px solid var(--rule); padding: 4px 10px; font-size: .85rem; color: var(--slate); }
+  .chip.on { border-color: var(--ink); color: var(--ink); font-weight: 600; }
+  .case { padding: 14px 20px; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; }
+  .case.sel { background: var(--soft-vault); box-shadow: inset 4px 0 0 var(--vault); }
+  .case .amt { font-weight: 700; font-size: 1.05rem; }
+  .case .lvl { font-size: .8rem; font-weight: 700; padding: 2px 8px; align-self: start; }
+  .CRITICO { background: var(--alarm); color: #fff; } .ALTO { background: var(--soft-alarm); color: var(--alarm); }
+  .case .meta { color: var(--slate); font-size: .85rem; }
+  .case .sla { font-size: .85rem; text-align: right; color: var(--slate); }
+  .case .sla.late { color: var(--alarm); font-weight: 600; }
+  main { padding: 26px 32px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 22px; align-content: start; }
+  .card { background: var(--panel); border: 1px solid var(--rule); padding: 20px 22px; }
+  .head { grid-column: 1 / -1; display: flex; align-items: flex-end; gap: 28px; }
+  .head .big { font-size: 2.6rem; font-weight: 800; letter-spacing: -.01em; }
+  .head .k { color: var(--slate); font-size: .9rem; }
+  .head .prob { font-size: 2.6rem; font-weight: 800; color: var(--alarm); }
+  .head .rec { margin-left: auto; text-align: right; }
+  .head .rec b { display: block; font-size: 1.1rem; color: var(--alarm); }
+  h3 { font-size: 1rem; margin: 0 0 12px; }
+  .factor { display: grid; grid-template-columns: 210px 1fr 54px; gap: 10px; align-items: center; margin-bottom: 10px; font-size: .92rem; }
+  .bar { height: 12px; background: #E7ECF1; position: relative; }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--alarm); }
+  .bar i.down { background: var(--vault); }
+  .note { color: var(--slate); font-size: .85rem; margin-top: 10px; }
+  .timeline { list-style: none; margin: 0; padding: 0; }
+  .timeline li { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--rule); font-size: .92rem; }
+  .timeline time { color: var(--slate); }
+  .timeline .flag { color: var(--alarm); font-weight: 600; }
+  .actions { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; }
+  button { font: inherit; padding: 12px 18px; border: 1px solid var(--ink); background: #fff; cursor: pointer; white-space: nowrap; }
+  button.block { background: var(--alarm); border-color: var(--alarm); color: #fff; font-weight: 700; }
+  button.auth { border-color: var(--vault); color: var(--vault); font-weight: 600; }
+  .kbd { color: var(--slate); font-size: .82rem; }
+  .actions .right { margin-left: auto; color: var(--slate); font-size: .88rem; max-width: 380px; }
+  .mock { position: fixed; right: 12px; bottom: 10px; color: var(--slate); font-size: .78rem; }
+</style>
+</head>
+<body>
+<div class="band"><b>Ataque de teste de cartão em andamento</b><span>12 micro-transações suspeitas no último minuto; 3 estabelecimentos concentram 80%.</span><span class="cta">Ver protocolo</span></div>
+<div class="app">
+  <aside>
+    <h2>Fila de revisão</h2>
+    <p class="sub">14 casos, ordenados por valor em risco (probabilidade × valor)</p>
+    <div class="filters"><span class="chip on">Todos</span><span class="chip">Crítico</span><span class="chip">Alto valor</span><span class="chip">Teste de cartão</span></div>
+    <div class="case sel"><span class="amt">€ 4.556,08</span><span class="lvl CRITICO">CRÍTICO</span><span class="meta">Eletrônicos online, 02:14</span><span class="sla late">SLA 1 min</span></div>
+    <div class="case"><span class="amt">€ 2.180,00</span><span class="lvl CRITICO">CRÍTICO</span><span class="meta">Saque internacional, 02:11</span><span class="sla">SLA 4 min</span></div>
+    <div class="case"><span class="amt">€ 1,00</span><span class="lvl CRITICO">CRÍTICO</span><span class="meta">Assinatura digital, 02:15, 1 de 12 do lote</span><span class="sla">SLA 6 min</span></div>
+    <div class="case"><span class="amt">€ 689,90</span><span class="lvl ALTO">ALTO</span><span class="meta">Passagens aéreas, 01:58</span><span class="sla">SLA 9 min</span></div>
+    <div class="case"><span class="amt">€ 312,40</span><span class="lvl ALTO">ALTO</span><span class="meta">Joalheria, 01:52</span><span class="sla">SLA 12 min</span></div>
+    <div class="case"><span class="amt">€ 95,00</span><span class="lvl ALTO">ALTO</span><span class="meta">Games, 01:47</span><span class="sla">SLA 14 min</span></div>
+  </aside>
+  <main>
+    <section class="card head">
+      <div><div class="k">Valor</div><div class="big">€ 4.556,08</div></div>
+      <div><div class="k">Probabilidade de fraude</div><div class="prob">99,5%</div></div>
+      <div><div class="k">Modelo</div><div>lgbm v20260924, limiar 5,5%</div></div>
+      <div class="rec"><span class="k">Recomendação</span><b>Bloquear e contatar o cliente</b><span class="k">Perda evitada se for fraude: € 4.591</span></div>
+    </section>
+    <section class="card">
+      <h3>Por que o modelo sinalizou</h3>
+      <div class="factor"><span>Componente V14</span><span class="bar"><i style="width:92%"></i></span><span>+2,64</span></div>
+      <div class="factor"><span>Componente V17</span><span class="bar"><i style="width:76%"></i></span><span>+2,17</span></div>
+      <div class="factor"><span>Componente V12</span><span class="bar"><i style="width:58%"></i></span><span>+1,66</span></div>
+      <div class="factor"><span>Madrugada (0h a 6h)</span><span class="bar"><i style="width:22%"></i></span><span>+0,63</span></div>
+      <div class="factor"><span>Valor da transação</span><span class="bar"><i class="down" style="width:10%"></i></span><span>−0,28</span></div>
+      <p class="note">Contribuições TreeSHAP em log-odds. As componentes V são anonimizadas; com features interpretáveis, esta lista passa a dizer "país diferente do habitual", "dispositivo novo".</p>
+    </section>
+    <section class="card">
+      <h3>Atividade recente do cartão</h3>
+      <ul class="timeline">
+        <li><time>02:14</time><span>€ 4.556,08, eletrônicos online</span><span class="flag">esta</span></li>
+        <li><time>02:09</time><span>€ 1,00, assinatura digital</span><span class="flag">suspeita</span></li>
+        <li><time>02:08</time><span>€ 0,50, doação online</span><span class="flag">suspeita</span></li>
+        <li><time>ontem</time><span>€ 38,20, supermercado</span><span>aprovada</span></li>
+        <li><time>ontem</time><span>€ 12,90, transporte</span><span>aprovada</span></li>
+      </ul>
+      <p class="note">Padrão clássico: micro-valores de teste seguidos de compra alta. Requer histórico por cartão (feature store, próxima versão).</p>
+    </section>
+    <section class="actions">
+      <button class="block">Confirmar fraude e bloquear cartão</button><span class="kbd">F</span>
+      <button class="auth">Pedir autenticação ao cliente</button><span class="kbd">A</span>
+      <button>Liberar transação</button><span class="kbd">L</span>
+      <span class="right">A decisão do analista vira rótulo em minutos e alimenta o próximo retreino.</span>
+    </section>
+  </main>
+</div>
+<div class="mock">Mockup com dados ilustrativos</div>
+</body>
+</html>

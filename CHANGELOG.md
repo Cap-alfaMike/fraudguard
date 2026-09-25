@@ -15,6 +15,8 @@ Somente adições; nenhum comportamento existente foi alterado.
 - SLOs com alertas de burn rate em múltiplas janelas; dashboard Grafana provisionado.
 - Workflows `platform` e `ml-quality`; Dependabot, pre-commit, CODEOWNERS, templates.
 - Documentos: SLO, modelo de ameaças, contrato de dados, SDRs 010 a 013.
+- Mockup de produto da fila de revisão do analista (`docs/product/case-review-mock.html`).
+- Figuras em qualidade de apresentação geradas dos dados reais do pipeline (`scripts/make_presentation_figures.py`).
 
 ## [1.0.0]
 - Versão inicial: pipeline de ML, API, Early Warning System, relatórios via LLM, container, CI e documentação.

@@ -239,3 +239,6 @@ Somente adições; todo o comportamento da v1.0 foi preservado e os testes exist
 **Governança.** Workflows `platform` e `ml-quality` (semanal), Dependabot, pre-commit, CODEOWNERS, templates de PR e de incidente, [SECURITY](SECURITY.md), [CONTRIBUTING](CONTRIBUTING.md), [CHANGELOG](CHANGELOG.md), [modelo de ameaças](docs/THREAT_MODEL.md) e [contrato de dados](docs/DATA_CONTRACT.md).
 
 ![Métricas com intervalos de confiança](reports/figures/uncertainty_intervals.png)
+
+**Produto.** Mockup da [fila de revisão do analista](docs/product/case-review-mock.html), a interface da jornada principal: casos ordenados por valor em risco, fatores do modelo e três decisões (bloquear, autenticar, liberar) que viram rótulos para o retreino. Figuras para apresentação: `python scripts/make_presentation_figures.py`.
+
