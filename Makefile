@@ -31,3 +31,21 @@ docker-up:
 
 docker-down:
 	docker compose down
+
+# ---- v1.1: avaliação estatística, ciclo de vida e plataforma ----
+.PHONY: uncertainty batch-monitor champion-challenger test-behavioral k8s-render
+
+uncertainty:         ## ICs das métricas por block bootstrap
+	python scripts/evaluate_uncertainty.py
+
+batch-monitor:       ## monitoramento com rótulos atrasados
+	python scripts/batch_monitor.py
+
+champion-challenger: ## treina challenger e aplica o portão de promoção
+	python scripts/champion_challenger.py
+
+test-behavioral:     ## testes comportamentais do modelo
+	pytest tests/behavioral -q --no-cov
+
+k8s-render:          ## renderiza o overlay de produção (requer kustomize)
+	kustomize build deploy/k8s/overlays/production

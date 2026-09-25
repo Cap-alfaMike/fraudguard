@@ -1,7 +1,7 @@
 global:
   scrape_interval: 15s
   evaluation_interval: 30s
-rule_files: [alerts.yml]
+rule_files: [alerts.yml, slo.yml]
 scrape_configs:
   - job_name: fraudguard
     metrics_path: /metrics

@@ -1,0 +1,6 @@
+# Revisão obrigatória por área (ajuste os times da sua organização)
+*                               @Cap-alfaMike
+/src/fraudguard/modeling/       @Cap-alfaMike
+/src/fraudguard/config.py       @Cap-alfaMike
+/deploy/                        @Cap-alfaMike
+/.github/workflows/             @Cap-alfaMike

@@ -1,0 +1,18 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: fraudguard
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: fraudguard }
+  minReplicas: 3   # N+1 em três zonas
+  maxReplicas: 30
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 60 } }  # folga para picos
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies: [{ type: Percent, value: 100, periodSeconds: 30 }]  # dobra rápido em ataque/pico
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies: [{ type: Percent, value: 20, periodSeconds: 60 }]   # desce devagar

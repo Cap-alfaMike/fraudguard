@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fraudguard-config
+data:
+  FRAUDGUARD_LOG_LEVEL: "INFO"
+  FRAUDGUARD_DEMO_MODE: "false"
+  FRAUDGUARD_LATENCY_SLO_MS: "50"
+  FRAUDGUARD_LLM_ENABLED: "true"
+  FRAUDGUARD_LLM_MODEL: "claude-sonnet-5"

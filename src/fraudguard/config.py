@@ -67,6 +67,8 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_json: bool = True
     demo_mode: bool = True  # habilita /ews/simulate (desligar em produção)
+    # Modo sombra (SDR-011): um challenger pontua em paralelo, sem afetar a decisão
+    shadow_model_path: Path | None = None
 
     # Early Warning System
     ews_window_size: int = 2000

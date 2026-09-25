@@ -63,3 +63,9 @@ ALERTS = Counter("fraudguard_ews_alerts_total", "Alertas emitidos pelo EWS", ["t
 VALUE_BLOCKED = Counter("fraudguard_value_blocked_eur_total", "Valor (EUR) de transações marcadas como suspeitas")
 MODEL_INFO = Gauge("fraudguard_model_info", "Modelo em produção", ["version", "name"])
 THRESHOLD = Gauge("fraudguard_decision_threshold", "Limiar de decisão ativo")
+SHADOW_PREDICTIONS = Counter("fraudguard_shadow_predictions_total", "Predições do modelo sombra", ["agreement"])
+SHADOW_ABS_DIFF = Histogram(
+    "fraudguard_shadow_abs_probability_diff",
+    "|p_champion - p_shadow|",
+    buckets=(0.0001, 0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 1.0),
+)

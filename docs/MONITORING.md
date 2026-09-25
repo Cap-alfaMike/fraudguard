@@ -35,3 +35,9 @@ Ferramentas adequadas para essa camada: Evidently ou Alibi Detect para relatóri
 | Mudança nas premissas de custo | Apenas recalcular o limiar (sem retreino) |
 
 **Promoção de modelo.** O novo modelo roda em *shadow* (pontua sem decidir) por pelo menos uma semana. É promovido se superar o atual em AUPRC e custo na mesma coorte, sem aumentar a taxa de falso positivo além do limite acordado. Como a imagem é imutável e versionada, o rollback é trocar a tag.
+
+## Implementação (v1.1)
+
+- **Camada 3** implementada em `ews/batch_monitor.py`, com demonstração em `scripts/batch_monitor.py` e resultado em `reports/BATCH_MONITORING.md`. A simulação mostra por que a maturação importa: seis horas depois, o recall *aparente* é 0,959, contra 0,755 real, porque as fraudes que o modelo pegou são rotuladas em minutos e as que ele perdeu só aparecem no chargeback. Mesmo após 96 h a cobertura não é completa (p95 do atraso ≈ 10 dias na simulação): a janela de maturação deve ser calibrada pelo percentil alto do atraso.
+- **Shadow e promoção** implementados ([SDR-011](sdr/SDR-011-ciclo-de-vida.md)).
+- **SLOs e burn rate** implementados ([SDR-013](sdr/SDR-013-slo-burn-rate.md)); dashboard Grafana em `ops/grafana/`.

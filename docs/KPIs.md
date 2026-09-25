@@ -46,3 +46,17 @@ A perda evitada em valor (86,9%) supera o recall em contagem (75,5%) porque o cu
 | Erros internos | < 0,1% | 0% | `fraudguard_errors_total{kind!="validation"}` |
 | Disponibilidade | 99,9% | — | probes do orquestrador |
 | PSI dos scores | < 0,10 | recalculado a cada 100 eventos | `/ews/status` |
+
+## Incerteza (v1.1)
+
+Com 94 fraudes no teste, os KPIs de modelo e de negócio acima têm faixa relevante. IC 95% por block bootstrap temporal (`make uncertainty`, [SDR-010](sdr/SDR-010-incerteza.md)):
+
+| KPI | Pontual | IC 95% |
+|---|---|---|
+| AUPRC | 0,774 | 0,691 a 0,848 |
+| Recall | 75,5% | 66,7% a 83,8% |
+| Precisão | 53,0% | 44,8% a 60,9% |
+| Taxa de falso positivo | 0,111% | 0,083% a 0,141% |
+| Redução de custo | 76,5% | 61,2% a 86,1% |
+
+A meta de "redução de custo ≥ 60%" é atendida mesmo no limite inferior.

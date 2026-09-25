@@ -1,0 +1,27 @@
+name: platform
+
+on:
+  push: { branches: [main], paths: ["deploy/**", "ops/**", "docker-compose.yml", ".github/workflows/platform.yml"] }
+  pull_request: { paths: ["deploy/**", "ops/**", "docker-compose.yml"] }
+
+permissions: { contents: read }
+
+jobs:
+  manifests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar kustomize, kubeconform e promtool
+        run: |
+          curl -sfL "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.4.3/kustomize_v5.4.3_linux_amd64.tar.gz" | tar xz kustomize
+          curl -sfL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz | tar xz kubeconform
+          curl -sfL https://github.com/prometheus/prometheus/releases/download/v3.5.0/prometheus-3.5.0.linux-amd64.tar.gz | tar xz --strip-components=1 prometheus-3.5.0.linux-amd64/promtool
+      - name: Kubernetes (schemas oficiais, modo estrito)
+        run: |
+          for o in deploy/k8s/overlays/*/; do
+            ./kustomize build "$o" | ./kubeconform -strict -summary -kubernetes-version 1.31.0 -
+          done
+      - name: Prometheus (config, alertas e SLOs)
+        run: ./promtool check config ops/prometheus/prometheus.yml
+      - name: Docker Compose
+        run: docker compose config --quiet && docker compose --profile observability --profile train config --quiet

@@ -33,6 +33,8 @@ from fraudguard.api.observability import (
     MODEL_INFO,
     PREDICTIONS,
     PROBABILITY,
+    SHADOW_ABS_DIFF,
+    SHADOW_PREDICTIONS,
     THRESHOLD,
     VALUE_BLOCKED,
     configure_logging,
@@ -67,6 +69,8 @@ class AppState:
         self.metadata: dict = {}
         self.started_at: float = time.time()
         self.load_error: str | None = None
+        self.shadow: FraudPredictor | None = None
+        self.shadow_stats: dict = {"n": 0, "disagreements": 0, "abs_diff_sum": 0.0, "errors": 0}
 
 
 def _load(state: AppState, settings: Settings) -> None:
@@ -88,10 +92,54 @@ def _load(state: AppState, settings: Settings) -> None:
         MODEL_INFO.labels(state.predictor.version, state.predictor.model_name).set(1)
         THRESHOLD.set(state.predictor.threshold)
         state.load_error = None
+        _load_shadow(state, settings)
         logger.info("serviço pronto", extra={"model_version": state.predictor.version, "llm_available": state.reporter.llm_available})
     except Exception as exc:  # readiness falha, liveness continua ok -> orquestrador não mata em loop
         state.load_error = f"{type(exc).__name__}: {exc}"
         logger.exception("falha ao carregar modelo")
+
+
+def _load_shadow(state: AppState, settings: Settings) -> None:
+    """Carrega o challenger em modo sombra, se configurado. Falha aqui nunca derruba o serviço."""
+    path = settings.shadow_model_path
+    if not path:
+        return
+    try:
+        state.shadow = FraudPredictor.load(path)
+        logger.info("modelo sombra carregado", extra={"shadow_version": state.shadow.version})
+    except Exception:
+        state.shadow = None
+        logger.exception("falha ao carregar modelo sombra; seguindo sem ele")
+
+
+def _score_shadow(state: AppState, frame, champion_probs, champion_flags, transactions) -> None:
+    """Pontua com o challenger e registra a comparação. Nunca altera a resposta."""
+    if state.shadow is None:
+        return
+    try:
+        probs = state.shadow.predict_proba(frame)
+        for tx, p_c, f_c, p_s in zip(transactions, champion_probs, champion_flags, probs, strict=True):
+            f_s = bool(p_s >= state.shadow.threshold)
+            agree = f_s == f_c
+            diff = abs(float(p_s) - p_c)
+            state.shadow_stats["n"] += 1
+            state.shadow_stats["disagreements"] += int(not agree)
+            state.shadow_stats["abs_diff_sum"] += diff
+            SHADOW_PREDICTIONS.labels("agree" if agree else "disagree").inc()
+            SHADOW_ABS_DIFF.observe(diff)
+            logger.info(
+                "predição sombra",
+                extra={
+                    "transaction_id": tx.transaction_id,
+                    "shadow_version": state.shadow.version,
+                    "shadow_probability": round(float(p_s), 6),
+                    "champion_probability": round(p_c, 6),
+                    "agreement": agree,
+                },
+            )
+    except Exception:
+        state.shadow_stats["errors"] += 1
+        logger.exception("falha no modelo sombra (ignorada)")
 
 
 def _facts(state: AppState) -> dict:
@@ -195,6 +243,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 },
             )
         LATENCY.observe(latency_ms / 1000)
+        _score_shadow(state, frame, [p.probability for p in preds], [p.is_suspicious for p in preds], transactions)
         return out, latency_ms
 
     # ---------------------------------------------------------- saúde
@@ -233,6 +282,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             latency_ms=round(latency_ms, 3),
             results=results,
         )
+
+    @app.get("/model/shadow", tags=["modelo"])
+    async def model_shadow():
+        """Comparação acumulada champion x challenger (modo sombra)."""
+        _require_model()
+        st = state.shadow_stats
+        return {
+            "enabled": state.shadow is not None,
+            "shadow_version": state.shadow.version if state.shadow else None,
+            "champion_version": state.predictor.version,
+            "predictions": st["n"],
+            "disagreement_rate": round(st["disagreements"] / st["n"], 6) if st["n"] else None,
+            "mean_abs_probability_diff": round(st["abs_diff_sum"] / st["n"], 6) if st["n"] else None,
+            "errors": st["errors"],
+        }
 
     @app.get("/model/info", tags=["modelo"])
     async def model_info():

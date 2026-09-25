@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraudguard
+spec:
+  replicas: 3
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }  # nunca reduz capacidade durante o deploy
+  selector:
+    matchLabels: { app: fraudguard }
+  template:
+    metadata:
+      labels: { app: fraudguard }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: /metrics
+    spec:
+      serviceAccountName: fraudguard
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 20
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile: { type: RuntimeDefault }
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector: { matchLabels: { app: fraudguard } }
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector: { matchLabels: { app: fraudguard } }
+      containers:
+        - name: api
+          image: ghcr.io/cap-alfamike/fraudguard:1.1.0  # sobrescrito pelo overlay (tag imutável/digest)
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8000 }]
+          envFrom: [{ configMapRef: { name: fraudguard-config } }]
+          env:
+            - name: ANTHROPIC_API_KEY
+              valueFrom: { secretKeyRef: { name: fraudguard-secrets, key: anthropic-api-key, optional: true } }
+          resources:
+            requests: { cpu: 500m, memory: 256Mi }
+            limits: { memory: 768Mi }  # sem limite de CPU: evita throttling que infla o p99
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          startupProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          lifecycle:
+            preStop:  # dá tempo ao balanceador de tirar o pod antes do SIGTERM
+              sleep: { seconds: 5 }
+          volumeMounts: [{ name: tmp, mountPath: /tmp }]
+      volumes:
+        - name: tmp
+          emptyDir: { medium: Memory, sizeLimit: 64Mi }

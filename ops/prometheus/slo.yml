@@ -1,0 +1,36 @@
+# SLOs com alertas de burn rate em múltiplas janelas (Google SRE Workbook, cap. 5).
+# Disponibilidade: 99,9% das predições sem erro interno (orçamento 0,1%).
+# Latência: 99% das inferências abaixo de 50 ms (orçamento 1%).
+groups:
+  - name: fraudguard-slo-recording
+    rules:
+      - record: slo:fraudguard_availability_error_ratio:rate5m
+        expr: sum(rate(fraudguard_errors_total{kind!="validation"}[5m])) / clamp_min(sum(rate(fraudguard_predictions_total[5m])) + sum(rate(fraudguard_errors_total{kind!="validation"}[5m])), 1e-9)
+      - record: slo:fraudguard_availability_error_ratio:rate1h
+        expr: sum(rate(fraudguard_errors_total{kind!="validation"}[1h])) / clamp_min(sum(rate(fraudguard_predictions_total[1h])) + sum(rate(fraudguard_errors_total{kind!="validation"}[1h])), 1e-9)
+      - record: slo:fraudguard_availability_error_ratio:rate6h
+        expr: sum(rate(fraudguard_errors_total{kind!="validation"}[6h])) / clamp_min(sum(rate(fraudguard_predictions_total[6h])) + sum(rate(fraudguard_errors_total{kind!="validation"}[6h])), 1e-9)
+      - record: slo:fraudguard_latency_error_ratio:rate5m
+        expr: 1 - sum(rate(fraudguard_inference_latency_seconds_bucket{le="0.05"}[5m])) / clamp_min(sum(rate(fraudguard_inference_latency_seconds_count[5m])), 1e-9)
+      - record: slo:fraudguard_latency_error_ratio:rate1h
+        expr: 1 - sum(rate(fraudguard_inference_latency_seconds_bucket{le="0.05"}[1h])) / clamp_min(sum(rate(fraudguard_inference_latency_seconds_count[1h])), 1e-9)
+      - record: slo:fraudguard_latency_error_ratio:rate6h
+        expr: 1 - sum(rate(fraudguard_inference_latency_seconds_bucket{le="0.05"}[6h])) / clamp_min(sum(rate(fraudguard_inference_latency_seconds_count[6h])), 1e-9)
+  - name: fraudguard-slo-alerts
+    rules:
+      - alert: FraudGuardAvailabilityBudgetFastBurn
+        expr: slo:fraudguard_availability_error_ratio:rate1h > 14.4 * 0.001 and slo:fraudguard_availability_error_ratio:rate5m > 14.4 * 0.001
+        labels: { severity: page, team: sre }
+        annotations: { summary: "Consumindo 2% do orçamento mensal de erro por hora", runbook: "docs/RUNBOOK.md#erros" }
+      - alert: FraudGuardAvailabilityBudgetSlowBurn
+        expr: slo:fraudguard_availability_error_ratio:rate6h > 6 * 0.001 and slo:fraudguard_availability_error_ratio:rate1h > 6 * 0.001
+        labels: { severity: ticket, team: sre }
+        annotations: { summary: "Consumindo 5% do orçamento mensal de erro a cada 6 h", runbook: "docs/RUNBOOK.md#erros" }
+      - alert: FraudGuardLatencyBudgetFastBurn
+        expr: slo:fraudguard_latency_error_ratio:rate1h > 14.4 * 0.01 and slo:fraudguard_latency_error_ratio:rate5m > 14.4 * 0.01
+        labels: { severity: page, team: sre }
+        annotations: { summary: "Orçamento de latência queimando 14,4x", runbook: "docs/RUNBOOK.md#latencia" }
+      - alert: FraudGuardLatencyBudgetSlowBurn
+        expr: slo:fraudguard_latency_error_ratio:rate6h > 6 * 0.01 and slo:fraudguard_latency_error_ratio:rate1h > 6 * 0.01
+        labels: { severity: ticket, team: sre }
+        annotations: { summary: "Orçamento de latência queimando 6x", runbook: "docs/RUNBOOK.md#latencia" }

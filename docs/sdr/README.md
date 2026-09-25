@@ -13,3 +13,7 @@ Cada decisão relevante tem um registro curto: contexto, decisão, alternativas 
 | [007](SDR-007-container.md) | Imagem multi-stage que treina no build; 1 processo por container | Aceita |
 | [008](SDR-008-inferencia-compilada.md) | Caminho de inferência NumPy com paridade verificada no startup | Aceita |
 | [009](SDR-009-early-warning-system.md) | EWS in-process com PSI e regras de ataque; agregação no Prometheus | Aceita |
+| [010](SDR-010-incerteza.md) | Intervalos de confiança por block bootstrap temporal | Aceita |
+| [011](SDR-011-ciclo-de-vida.md) | Registry imutável, modo sombra e portão de promoção estatístico | Aceita |
+| [012](SDR-012-kubernetes.md) | Kubernetes com Kustomize, HPA, PDB e hardening `restricted` | Aceita |
+| [013](SDR-013-slo-burn-rate.md) | SLOs com alertas de burn rate em múltiplas janelas | Aceita |

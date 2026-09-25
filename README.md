@@ -216,3 +216,26 @@ artifacts/             modelo, metadados e perfil de referência (versão de ref
 - O Dockerfile foi validado reproduzindo seus passos em um ambiente só com as dependências de runtime, e o CI faz o build real e um smoke test; o build não foi executado no ambiente de desenvolvimento, que não tinha Docker.
 
 ![Curva de custo por limiar](reports/figures/cost_curve.png)
+
+---
+
+## v1.1: nível de produção
+
+Somente adições; todo o comportamento da v1.0 foi preservado e os testes existentes continuam passando.
+
+**Rigor estatístico.** Toda métrica de teste agora tem intervalo de confiança por block bootstrap temporal (`make uncertainty`). Com 94 fraudes no teste, a AUPRC é **0,774 [0,691; 0,848]** e a redução de custo é **76,5% [61,2%; 86,1%]**: o ganho é certo, a magnitude exata é incerta. ([SDR-010](docs/sdr/SDR-010-incerteza.md), [relatório](reports/UNCERTAINTY.md))
+
+**Ciclo de vida do modelo.** Registry imutável por SHA-256, modo sombra na API (desligado por padrão; ative com `FRAUDGUARD_SHADOW_MODEL_PATH`) e portão de promoção por bootstrap pareado (`make champion-challenger`). ([SDR-011](docs/sdr/SDR-011-ciclo-de-vida.md), [relatório](reports/CHAMPION_CHALLENGER.md))
+
+**Monitoramento com rótulos atrasados.** Métricas por coorte madura, cobertura de rótulos e calibração (ECE). A simulação mostra que, seis horas depois, o recall aparente é 0,959 contra 0,755 real. ([relatório](reports/BATCH_MONITORING.md))
+
+**Testes comportamentais do modelo.** Invariância ao dia do calendário e à ordem, robustez a perturbações mínimas, direcionalidade da assinatura de fraude e funcionalidade mínima (`make test-behavioral`).
+
+**Plataforma.**
+- Kubernetes com Kustomize: HPA, PDB, spread por zona, NetworkPolicy e Pod Security `restricted`. Validado com `kubeconform` estrito. ([SDR-012](docs/sdr/SDR-012-kubernetes.md))
+- SLOs com burn rate em múltiplas janelas, validados com `promtool`. ([SDR-013](docs/sdr/SDR-013-slo-burn-rate.md), [SLO](docs/SLO.md))
+- Grafana provisionado: `docker compose --profile observability up --build`, em http://localhost:3000.
+
+**Governança.** Workflows `platform` e `ml-quality` (semanal), Dependabot, pre-commit, CODEOWNERS, templates de PR e de incidente, [SECURITY](SECURITY.md), [CONTRIBUTING](CONTRIBUTING.md), [CHANGELOG](CHANGELOG.md), [modelo de ameaças](docs/THREAT_MODEL.md) e [contrato de dados](docs/DATA_CONTRACT.md).
+
+![Métricas com intervalos de confiança](reports/figures/uncertainty_intervals.png)

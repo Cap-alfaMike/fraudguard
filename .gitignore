@@ -7,3 +7,4 @@ htmlcov/
 .venv/
 .env
 data/raw/*.csv
+artifacts/registry/

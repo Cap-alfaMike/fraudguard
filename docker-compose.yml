@@ -1,5 +1,5 @@
 # Subida rápida:          docker compose up --build
-# Com Prometheus:         docker compose --profile observability up --build
+# Com Prometheus+Grafana: docker compose --profile observability up --build   (Grafana em :3000)
 # Retreino com CSV real:  docker compose --profile train run --rm trainer
 name: fraudguard
 
@@ -55,3 +55,17 @@ services:
       - ./ops/prometheus:/etc/prometheus:ro
     depends_on:
       api: { condition: service_healthy }
+
+  grafana:
+    profiles: ["observability"]
+    image: grafana/grafana:12.1.9
+    security_opt: ["no-new-privileges:true"]
+    ports: ["3000:3000"]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"      # somente para demonstração local
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./ops/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./ops/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [prometheus]
