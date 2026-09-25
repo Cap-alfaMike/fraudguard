@@ -15,6 +15,21 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12", cache: pip, cache-dependency-path: requirements-dev.txt }
       - run: pip install -r requirements-dev.txt
+      - name: Treinar o modelo neste runner
+        # Dados sintéticos dependem de exp/sin do NumPy, cuja implementação SIMD varia por CPU;
+        # um único bit diferente muda a impressão digital. Treinar aqui garante que modelo e
+        # dados de avaliação nasçam na mesma máquina (a avaliação recusa dados diferentes).
+        run: PYTHONPATH=src python -m fraudguard.modeling.train --no-plots
+      - name: Diagnóstico da impressão digital dos dados
+        run: |
+          PYTHONPATH=src python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from fraudguard.data.loader import load_dataset
+          from fraudguard.modeling.train import _data_fingerprint
+          df, src = load_dataset(None)
+          meta = json.load(open("artifacts/model_metadata.json"))
+          print(f"Fonte: {src}; impressão digital dos dados: `{_data_fingerprint(df)}`; do modelo: `{meta['data']['fingerprint']}`")
+          PY
       - name: Testes comportamentais do modelo
         run: PYTHONPATH=src pytest tests/behavioral -q --no-cov
       - name: Intervalos de confiança (block bootstrap)

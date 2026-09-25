@@ -40,7 +40,11 @@ def load_eval_set(
         df, _ = load_dataset(data_path or settings.raw_data_path, seed=SEED)
     fp = _data_fingerprint(df)
     if fp != meta["data"]["fingerprint"]:
-        raise ValueError(f"dados diferentes dos usados no treino (fingerprint {fp} != {meta['data']['fingerprint']})")
+        raise ValueError(
+            f"dados diferentes dos usados no treino (fingerprint {fp} != {meta['data']['fingerprint']}). "
+            "Com dados sintéticos, CPUs diferentes podem gerar valores que diferem no último bit; "
+            "rode `make train` nesta máquina antes de avaliar."
+        )
     df, _ = deduplicate(df)
     split = temporal_split(df)
     predictor = FraudPredictor.load(model_path or settings.model_path)
