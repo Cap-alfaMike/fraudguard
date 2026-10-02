@@ -6,7 +6,7 @@ scikit-learn==1.8.0
 lightgbm==4.7.0
 joblib==1.5.3
 fastapi==0.141.1
-uvicorn[standard]==0.53.0
+uvicorn[standard]==0.54.0
 pydantic==2.13.5
 pydantic-settings==2.15.0
 prometheus-client==0.26.0
